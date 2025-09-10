@@ -6,6 +6,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import {KaiaConfig} from "./KaiaConfig.sol";
+import {IDomaProtocol} from "./IDomaProtocol.sol";
 
 /**
  * @title StrategyVault
@@ -26,6 +28,8 @@ contract StrategyVault is ERC4626, AccessControl, ReentrancyGuard {
     uint256 public withdrawalFee = 0; // Fee in basis points
     uint256 public performanceFee = 0; // Fee in basis points
     address public feeRecipient;
+    // Optional Doma Protocol endpoint for DomainFi integrations (testnet placeholder)
+    address public domaProtocol;
 
     // Vault owner - can be updated with ownership transfer
     address public vaultOwner;
@@ -47,6 +51,10 @@ contract StrategyVault is ERC4626, AccessControl, ReentrancyGuard {
     event PerformanceFeeUpdated(uint256 newFee);
     event FeeRecipientUpdated(address newRecipient);
     event FeesCollected(uint256 amount);
+    // Kaia + Mini Dapp SDK integration signals
+    event KaiaMiniDappAction(address indexed caller, string action, uint256 timestamp, uint256 chainId);
+    // Doma integration signals for DomainFi hooks
+    event DomaAction(address indexed caller, string action, uint256 timestamp, address domaProtocol);
 
     // Errors
     error TradingDisabled();
@@ -74,6 +82,13 @@ contract StrategyVault is ERC4626, AccessControl, ReentrancyGuard {
         feeRecipient = msg.sender;
 
         lastRebalanceTimestamp = block.timestamp;
+    }
+
+    /**
+     * @dev Configure the Doma Protocol integration endpoint (optional)
+     */
+    function setDomaProtocol(address _doma) external onlyRole(ADMIN_ROLE) {
+        domaProtocol = _doma;
     }
 
     /**
@@ -105,6 +120,12 @@ contract StrategyVault is ERC4626, AccessControl, ReentrancyGuard {
         _mint(receiver, shares);
 
         emit Deposit(msg.sender, receiver, assets, shares);
+        if (KaiaConfig.isKaiaChain()) {
+            emit KaiaMiniDappAction(msg.sender, "deposit", block.timestamp, block.chainid);
+        }
+        if (domaProtocol != address(0)) {
+            emit DomaAction(msg.sender, "deposit", block.timestamp, domaProtocol);
+        }
     }
 
     /**
@@ -146,6 +167,12 @@ contract StrategyVault is ERC4626, AccessControl, ReentrancyGuard {
         }
 
         emit StrategyExecuted(msg.sender, contracts, currentStrategyId);
+        if (KaiaConfig.isKaiaChain()) {
+            emit KaiaMiniDappAction(msg.sender, "execute", block.timestamp, block.chainid);
+        }
+        if (domaProtocol != address(0)) {
+            emit DomaAction(msg.sender, "execute", block.timestamp, domaProtocol);
+        }
     }
 
     /**
@@ -197,6 +224,12 @@ contract StrategyVault is ERC4626, AccessControl, ReentrancyGuard {
 
         emit Withdraw(msg.sender, receiver, owner, assets, shares);
         emit WithdrawalProcessed(owner, shares, assetsAfterFee);
+        if (KaiaConfig.isKaiaChain()) {
+            emit KaiaMiniDappAction(msg.sender, "withdraw", block.timestamp, block.chainid);
+        }
+        if (domaProtocol != address(0)) {
+            emit DomaAction(msg.sender, "withdraw", block.timestamp, domaProtocol);
+        }
     }
 
     /**
@@ -248,6 +281,12 @@ contract StrategyVault is ERC4626, AccessControl, ReentrancyGuard {
 
         emit Withdraw(msg.sender, receiver, owner, assets, shares);
         emit WithdrawalProcessed(owner, shares, assetsAfterFee);
+        if (KaiaConfig.isKaiaChain()) {
+            emit KaiaMiniDappAction(msg.sender, "redeem", block.timestamp, block.chainid);
+        }
+        if (domaProtocol != address(0)) {
+            emit DomaAction(msg.sender, "redeem", block.timestamp, domaProtocol);
+        }
     }
 
     /**

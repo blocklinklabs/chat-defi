@@ -1,4 +1,5 @@
 # Project Overview
+
 ![alt text](image.png)
 
 The [chatDeFi.app](http://chatdefi.app) AI agent democratizes DeFi by enabling anyone to create, execute and manage DeFi investment strategies by simply typing in their desired DeFi investment strategy into a user-friendly chatbot interface. Our AI agent then executes these strategies automatically.
@@ -10,36 +11,124 @@ For example, you could instruct our AI agent to:
 Our AI agent will parse your natural language request into the corresponding DeFi strategy and actively manage and rebalance your portfolio according to the parameters you define.
 
 Key Components
-* Front-end:
-  * [chatDeFi.app](http://chatdefi.app) houses the chatbot interface to enter in your desired DeFi strategy in plain english.
-* Back-end: 
-  * Our AI agent will process/interpret your strategy, manage your strategy vault  by depositing/withdrawing your vault funds to/from the approriate DeFi protocol according to your investment strategy parameters, and auto-stop if certain risk parameters are reached.
+
+- Front-end:
+  - [chatDeFi.app](http://chatdefi.app) houses the chatbot interface to enter in your desired DeFi strategy in plain english.
+- Back-end:
+  - Our AI agent will process/interpret your strategy, manage your strategy vault by depositing/withdrawing your vault funds to/from the approriate DeFi protocol according to your investment strategy parameters, and auto-stop if certain risk parameters are reached.
 
 Key Features
-* Blockchains supported: 
-  * Celo, Polygon, Rootstock, Saga
-* DeFi protocols supported: 
-  * DeFi lending (i.e. Aave, Compound, etc. (varies by blockchain))
-* Strategies supported: 
-  * i) Portfolio allocation strategy (i.e. 80%/20% or 70/30% splits across x number of DeFi lending pools), 
-  * ii) Risk management strategy (i.e. auto-stop AI agent if portfolio value falls 10%) 
-  * iii) Min. Return requirements (i.e. only invest in pools with min. return of x%)
+
+- Blockchains supported:
+  - Celo, Polygon, Rootstock, Saga, Kaia (Mini Dapp target)
+- DeFi protocols supported:
+  - DeFi lending (i.e. Aave, Compound, etc. (varies by blockchain))
+- Strategies supported:
+  - i) Portfolio allocation strategy (i.e. 80%/20% or 70/30% splits across x number of DeFi lending pools),
+  - ii) Risk management strategy (i.e. auto-stop AI agent if portfolio value falls 10%)
+  - iii) Min. Return requirements (i.e. only invest in pools with min. return of x%)
 
 Future Roadmap
-* Support additional DeFi protocols (DEX trading, perpetual trading, yield optimizers) 
-* "Invest" feature - co-invest alongside an existing DeFi strategy (aka vault) on the platform (instead of creating your own DeFi investment)
+
+- Support additional DeFi protocols (DEX trading, perpetual trading, yield optimizers)
+- "Invest" feature - co-invest alongside an existing DeFi strategy (aka vault) on the platform (instead of creating your own DeFi investment)
 
 Architecture
 ![alt text](image-2.png)
 
+## Kaia Mini Dapp SDK and Stablecoin Integration
+
+- We added Kaia-specific configuration and USDT auto-resolution via `foundry/src/KaiaConfig.sol`.
+- The `StrategyVault` now emits Mini Dapp-friendly events on Kaia chains:
+  - `KaiaMiniDappAction(caller, action, timestamp, chainId)` on deposit, withdraw, redeem, execute.
+- The deploy script auto-detects Kaia chain IDs and defaults to Kaia-native USDT when `ASSET_TOKEN` is not provided (`foundry/script/DeployStrategyVault.s.sol`).
+- A LINE Mini Dapp can subscribe to these events to drive UI updates using the Kaia Mini Dapp SDK.
+
+### Deploying on Kaia
+
+1. `export PRIVATE_KEY=...`
+2. Optional override: `export ASSET_TOKEN=0x...` (otherwise Kaia USDT from `KaiaConfig` is used on Kaia chains)
+3. Run: `forge script foundry/script/DeployStrategyVault.s.sol:DeployStrategyVault --rpc-url $KAIA_RPC --broadcast -vvvv`
+4. Verify `KaiaMiniDappAction` events on user actions.
+
+## Doma Protocol Integration (DomainFi)
+
+- Doma integration hooks have been added to `StrategyVault`:
+  - Optional endpoint via `setDomaProtocol(address)`; store in `domaProtocol`.
+  - Emits `DomaAction(caller, action, timestamp, domaProtocol)` on deposit/withdraw/redeem/execute when configured.
+- Minimal placeholder interface `foundry/src/IDomaProtocol.sol` allows wiring concrete Doma contracts later.
+- Deployment script supports optional env `DOMA_PROTOCOL` to configure the endpoint automatically.
+- Auto-configuration via `DOMA_NETWORK` is also supported: `DOMA_TESTNET` | `SEPOLIA` | `BASE_SEPOLIA`. The script selects Doma’s `proxyDomaRecord` for the chosen network as the endpoint.
+
+### Why Doma
+
+- Domains as tokenized RWAs enable new DeFi primitives (collateral, auctions, portfolio signals) that align with our AI-driven strategy vaults.
+- Doma’s cross-chain and marketplace infra provides orderflow, events, and valuation surfaces our agent can react to.
+- Hackathon alignment: We can demonstrate on-chain activity and DomainFi impact without overhauling our core architecture.
+
+### How we integrated Doma
+
+- Smart contracts:
+  - Added `domaProtocol` address + `setDomaProtocol(address)` in `StrategyVault`.
+  - Emitted `DomaAction` on user flows (deposit/withdraw/redeem/execute) for bots/analytics.
+  - Created `IDomaProtocol.sol` as an integration touchpoint.
+- Tooling & config:
+  - Added `DomaConfig.sol` with documented testnet addresses (Doma Testnet, Sepolia, Base Sepolia).
+  - Updated deploy script to prefer `DOMA_PROTOCOL` or infer via `DOMA_NETWORK` (e.g., `SEPOLIA`).
+- Ops & demo:
+  - Teams can point `DOMA_PROTOCOL` to Doma’s `proxyDomaRecord` or `crossChainGateway` for event-driven workflows and dashboards.
+
+### How to test Doma hooks
+
+1. `export DOMA_PROTOCOL=0xYourDomaTestnetEndpoint`
+2. Deploy the vault using the standard script.
+3. Perform deposits/withdrawals and observe `DomaAction` events for DomainFi analytics and bot subscriptions.
+
 # Celo Prize Requirement Details
-See [Readme (Celo deployment).md](./Readme%20(Celo%20deployment).md)
+
+See [Readme (Celo deployment).md](<./Readme%20(Celo%20deployment).md>)
 
 # Polygon Prize Requirement Details
-See [Readme (Polygon deployment).md](Readme%20(Polygon%20deployment).md)
+
+See [Readme (Polygon deployment).md](<Readme%20(Polygon%20deployment).md>)
 
 # Rootstock Prize Requirement Details
-See [Readme (Rootstock deployment).md](./Readme%20(Rootstock%20deployment).md)
+
+See [Readme (Rootstock deployment).md](<./Readme%20(Rootstock%20deployment).md>)
 
 # Saga Prize Requirement Details
-See [Readme (Saga deployment).md](./Readme%20(Saga%20deployment).md)
+
+See [Readme (Saga deployment).md](<./Readme%20(Saga%20deployment).md>)
+
+## Hackathon: Kaia Wave Stablecoin Summer 2025
+
+**Introduction**: Build a DeFi Mini Dapp powered by Kaia-native USDT. We extended our vault and scripts to work natively on Kaia and emit Mini Dapp compatible events.
+
+**Developer Support**: Join Discord: `https://discord.gg/kaiachain`
+
+**Who’s it for**: Early-stage founders with EVM experience, ready to ship an MVP using stablecoins on Kaia.
+
+**Why it matters**: Beyond prize money, Kaia Wave provides launch support, liquidity programs, and VC access.
+
+**Track**: The DeFi Mini-dApp leveraging Kaia-native USDT; examples include Earns, DeFAI Agents, and yield optimization.
+
+**Submission Requirements**:
+
+- Protocol + UI + demo (this repo)
+- LINE Mini Dapp linked to the protocol (UI + demo)
+- Dune dashboard for the DeFi use case
+- Pitch deck (DocSend)
+
+**Apply for LINE Mini-Dapp SDK access**:
+
+1. Go to `https://developers.dappportal.io/`
+2. Click “Apply”
+3. In Q7 select “Other” and enter: “Kaia Wave Stablecoin Summer Hackathon”
+
+**Timeline**:
+
+- Aug 25: Kick-off at WebX
+- Sep 2: Application Deadline
+- Sep 17: Submission Due
+- Sep 24: Finalists Announced
+- Sep 30: Finalists Demo & Winners at Token2049 Singapore
