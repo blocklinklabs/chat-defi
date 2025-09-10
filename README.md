@@ -99,36 +99,3 @@ See [Readme (Rootstock deployment).md](<./Readme%20(Rootstock%20deployment).md>)
 # Saga Prize Requirement Details
 
 See [Readme (Saga deployment).md](<./Readme%20(Saga%20deployment).md>)
-
-## Hackathon: Kaia Wave Stablecoin Summer 2025
-
-**Introduction**: Build a DeFi Mini Dapp powered by Kaia-native USDT. We extended our vault and scripts to work natively on Kaia and emit Mini Dapp compatible events.
-
-**Developer Support**: Join Discord: `https://discord.gg/kaiachain`
-
-**Who’s it for**: Early-stage founders with EVM experience, ready to ship an MVP using stablecoins on Kaia.
-
-**Why it matters**: Beyond prize money, Kaia Wave provides launch support, liquidity programs, and VC access.
-
-**Track**: The DeFi Mini-dApp leveraging Kaia-native USDT; examples include Earns, DeFAI Agents, and yield optimization.
-
-**Submission Requirements**:
-
-- Protocol + UI + demo (this repo)
-- LINE Mini Dapp linked to the protocol (UI + demo)
-- Dune dashboard for the DeFi use case
-- Pitch deck (DocSend)
-
-**Apply for LINE Mini-Dapp SDK access**:
-
-1. Go to `https://developers.dappportal.io/`
-2. Click “Apply”
-3. In Q7 select “Other” and enter: “Kaia Wave Stablecoin Summer Hackathon”
-
-**Timeline**:
-
-- Aug 25: Kick-off at WebX
-- Sep 2: Application Deadline
-- Sep 17: Submission Due
-- Sep 24: Finalists Announced
-- Sep 30: Finalists Demo & Winners at Token2049 Singapore
