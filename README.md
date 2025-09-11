@@ -84,6 +84,38 @@ Architecture
 2. Deploy the vault using the standard script.
 3. Perform deposits/withdrawals and observe `DomaAction` events for DomainFi analytics and bot subscriptions.
 
+## Mini Dapp SDK Integration (LINE / Kaia)
+
+### Why Mini Dapp
+
+- Native wallet/payment flows in LINE reduce friction and boost conversion for retail users.
+- SDK-driven events align with our on-chain `KaiaMiniDappAction` and `MiniDappPaymentIntent`, enabling coherent UX + audit trail.
+- Hackathon requirements (test mode, domain whitelisting) enforced via code and environment variables for reproducibility.
+
+### How we integrated the SDK
+
+- Frontend singleton at `frontend/miniapp/sdk.ts` initializes the SDK once:
+  - `NEXT_PUBLIC_MINI_DAPP_CLIENT_ID` and `NEXT_PUBLIC_MINI_DAPP_CHAIN_ID` (default `1001` testnet; set `8217` for mainnet)
+  - Exposes `getWalletProvider`, `getPaymentProvider`, and `createTestPayment()` which enforces `testMode: true`.
+- Vault function `recordMiniDappPaymentIntent(bytes32 intentId, bool testMode)` emits `MiniDappPaymentIntent` for audit/logging.
+- Recommended to generate `intentId = keccak256(clientSession || paymentId)` and call `recordMiniDappPaymentIntent` pre/post payment.
+
+### SDK Requirements we adhered to
+
+- Domain whitelisting: run on `http://localhost:3000` locally and pre-register any other domains.
+- Bitget Wallet (Reown) integration: complete domain verification and share `projectId` with Tech Support.
+- Test Mode: all payment creation uses `testMode: true`. If set to `false`, revenue attribution shifts to Kaia Wave.
+
+### Usage (frontend)
+
+1. Install SDK in your frontend project: `npm i @linenext/dapp-portal-sdk`
+2. Set env:
+   - `NEXT_PUBLIC_MINI_DAPP_CLIENT_ID=...`
+   - `NEXT_PUBLIC_MINI_DAPP_CHAIN_ID=1001`
+3. Example:
+   - Initialize once and call `createTestPayment({ amount: '1', asset: 'USDT' })`.
+   - Optionally call the vault `recordMiniDappPaymentIntent(intentId, true)` before/after for audit.
+
 # Celo Prize Requirement Details
 
 See [Readme (Celo deployment).md](<./Readme%20(Celo%20deployment).md>)

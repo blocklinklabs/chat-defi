@@ -55,6 +55,14 @@ contract StrategyVault is ERC4626, AccessControl, ReentrancyGuard {
     event KaiaMiniDappAction(address indexed caller, string action, uint256 timestamp, uint256 chainId);
     // Doma integration signals for DomainFi hooks
     event DomaAction(address indexed caller, string action, uint256 timestamp, address domaProtocol);
+    // Mini Dapp payment intents (off-chain payment initiation traces)
+    event MiniDappPaymentIntent(
+        address indexed caller,
+        bytes32 indexed intentId,
+        uint256 timestamp,
+        uint256 chainId,
+        bool testMode
+    );
 
     // Errors
     error TradingDisabled();
@@ -89,6 +97,15 @@ contract StrategyVault is ERC4626, AccessControl, ReentrancyGuard {
      */
     function setDomaProtocol(address _doma) external onlyRole(ADMIN_ROLE) {
         domaProtocol = _doma;
+    }
+
+    /**
+     * @dev Record a Mini Dapp payment intent for auditability (client triggers before/after payment create)
+     * @param intentId client-side generated identifier (e.g., keccak of session)
+     * @param testMode must be true during hackathon submissions per requirements
+     */
+    function recordMiniDappPaymentIntent(bytes32 intentId, bool testMode) external {
+        emit MiniDappPaymentIntent(msg.sender, intentId, block.timestamp, block.chainid, testMode);
     }
 
     /**
